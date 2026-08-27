@@ -1,48 +1,54 @@
-# Agora Admin (`agora-admin`)
+# Agora Admin
 
-React-админка каталога Agora: поставщики, офферы, сводка, тестовый ИИ-подбор, журнал чатов.
+Админка каталога: поставщики, офферы, сводка, тест ИИ-подбора, список чатов.
 
-Org: [Agora-hg](https://github.com/Agora-hg)
-
-| Репо | Назначение |
-|---|---|
-| [agora-back](https://github.com/Agora-hg/agora-back) | Laravel API |
-| **[agora-admin](https://github.com/Agora-hg/agora-admin)** | этот репозиторий |
-| [agora-leads](https://github.com/Agora-hg/agora-leads) | лиды для продаж |
+Ходит в Laravel API. Токен Sanctum лежит в `localStorage`.
 
 ## Стек
 
-Vite · React 19 · TypeScript · React Router · Sanctum Bearer (`localStorage`)
+Vite, React 19, TypeScript, React Router.
 
-## Локально
+## Запуск
 
-Сначала подними API (`agora-back` на `:8000`).
+Нужен API на `:8000`.
 
 ```bash
 cp .env.example .env
-# VITE_API_URL=http://127.0.0.1:8000
+```
+
+```env
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+```bash
 npm install
 npm run dev
 ```
 
-http://localhost:5173  
+http://localhost:5173 — `admin@agora.local` / `password` (после `migrate --seed` на API).
 
-Логин после `php artisan migrate --seed` на бэке: `admin@agora.local` / `password`
+На бэке: `ADMIN_FRONTEND_URL=http://localhost:5173`
 
-В `agora-back` `.env`: `ADMIN_FRONTEND_URL=http://localhost:5173`
+## Экраны
+
+| Путь | Что |
+|---|---|
+| `/` | сводка каталога и расход ИИ |
+| `/offers` | SKU |
+| `/suppliers` | компании |
+| `/ai` | чат подбора (как будет на витрине + счётчик ₽) |
+| `/ai/sessions` | все диалоги |
+
+Стоимость LLM только здесь. Публичный `/api/ai` её не отдаёт.
 
 ## Vercel
 
-1. Import **этот** репо (`Agora-hg/agora-admin`)  
-2. Framework: Vite  
-3. Env: `VITE_API_URL=https://your-api-domain.com` (без хвоста `/api` или с — смотри `src/api/client.ts`)  
-4. SPA rewrite в `vercel.json`  
-5. На бэке: `ADMIN_FRONTEND_URL=https://your-admin.vercel.app`
+Import этого репо, фреймворк Vite.
 
-## Страницы
+```env
+VITE_API_URL=https://your-api.example
+```
 
-`/` сводка · `/offers` · `/suppliers` · `/ai` тест подбора · `/ai/sessions` все чаты
+Корень API без обязательного `/api` — клиент сам клеит путь. Rewrite SPA уже в `vercel.json`.
 
-Стоимость LLM видна **только** в админке, на витрину не отдаётся.
-
-Не коммитить `.env`, `node_modules/`, `dist/`.
+На бэке: `ADMIN_FRONTEND_URL=https://your-admin.vercel.app`
