@@ -1,28 +1,28 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { SupplierAvatar } from '../components/SupplierAvatar'
-import type { Paginated, Supplier } from '../types'
+import type { Paginated, Rfq } from '../types'
 
-export function SuppliersPage() {
-  const [data, setData] = useState<Paginated<Supplier> | null>(null)
-  const [q, setQ] = useState('')
+const statusLabel: Record<string, string> = {
+  new: 'Новая',
+  confirmed: 'Подтверждена',
+  cancelled: 'Отменена',
+}
+
+export function RfqsPage() {
+  const [data, setData] = useState<Paginated<Rfq> | null>(null)
   const [status, setStatus] = useState('')
+  const [q, setQ] = useState('')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   async function load(page = 1) {
     setLoading(true)
-    setError(null)
     try {
       const params = new URLSearchParams()
-      if (q) params.set('q', q)
       if (status) params.set('status', status)
+      if (q) params.set('q', q)
       params.set('page', String(page))
-      const res = await api<Paginated<Supplier>>(`/admin/suppliers?${params}`)
-      setData(res)
-    } catch {
-      setError('Не удалось загрузить поставщиков')
+      setData(await api<Paginated<Rfq>>(`/admin/rfqs?${params}`))
     } finally {
       setLoading(false)
     }
@@ -38,24 +38,20 @@ export function SuppliersPage() {
     load(1)
   }
 
-  async function onDelete(id: number, name: string) {
-    if (!confirm(`Удалить поставщика «${name}»?`)) return
-    await api(`/admin/suppliers/${id}`, { method: 'DELETE' })
-    load(data?.meta.current_page || 1)
-  }
-
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Поставщики</h1>
-          <p className="text-sm text-slate-500">Справочник компаний</p>
+          <h1 className="text-2xl font-semibold">Заявки</h1>
+          <p className="text-sm text-slate-500">
+            Склад истории для кабинета поставщика. Подтверждение шлёт заявку в Telegram.
+          </p>
         </div>
         <Link
-          to="/suppliers/new"
+          to="/rfqs/new"
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
-          + Добавить
+          + Заявка
         </Link>
       </div>
 
@@ -63,7 +59,7 @@ export function SuppliersPage() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Поиск…"
+          placeholder="Покупатель, компания, телефон…"
           className="rounded-lg border px-3 py-2 text-sm"
         />
         <select
@@ -72,15 +68,15 @@ export function SuppliersPage() {
           className="rounded-lg border px-3 py-2 text-sm"
         >
           <option value="">Все статусы</option>
-          <option value="active">Активные</option>
-          <option value="inactive">Неактивные</option>
+          <option value="new">Новые</option>
+          <option value="confirmed">Подтверждённые</option>
+          <option value="cancelled">Отменённые</option>
         </select>
         <button type="submit" className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50">
           Найти
         </button>
       </form>
 
-      {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
       {loading && <div className="text-sm text-slate-500">Загрузка…</div>}
 
       {!loading && data && (
@@ -88,60 +84,48 @@ export function SuppliersPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-4 py-3 font-medium">Лого</th>
-                <th className="px-4 py-3 font-medium">Название</th>
-                <th className="px-4 py-3 font-medium">ИНН</th>
-                <th className="px-4 py-3 font-medium">Города</th>
-                <th className="px-4 py-3 font-medium">Telegram</th>
+                <th className="px-4 py-3 font-medium">#</th>
+                <th className="px-4 py-3 font-medium">Покупатель</th>
+                <th className="px-4 py-3 font-medium">Поставщики</th>
                 <th className="px-4 py-3 font-medium">Статус</th>
                 <th className="px-4 py-3 font-medium" />
               </tr>
             </thead>
             <tbody>
-              {data.data.map((s) => (
-                <tr key={s.id} className="border-t">
+              {data.data.map((r) => (
+                <tr key={r.id} className="border-t">
+                  <td className="px-4 py-3">{r.id}</td>
                   <td className="px-4 py-3">
-                    <SupplierAvatar name={s.commercial_name} url={s.logo_url} size={40} />
+                    <div className="font-medium">{r.buyer_name}</div>
+                    <div className="text-xs text-slate-500">{r.buyer_phone || r.buyer_company || '—'}</div>
                   </td>
-                  <td className="px-4 py-3 font-medium">{s.commercial_name}</td>
-                  <td className="px-4 py-3">{s.inn}</td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {(s.shipping_cities || []).join(', ') || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-500">
-                    {s.telegram_status === 'linked'
-                      ? 'привязан'
-                      : s.telegram
-                        ? `ждём Start · ${s.telegram}`
-                        : '—'}
+                  <td className="px-4 py-3 text-slate-600">
+                    {(r.recipients || []).map((x) => x.supplier?.commercial_name).filter(Boolean).join(', ') || '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
-                        s.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                        r.status === 'new'
+                          ? 'bg-amber-50 text-amber-800'
+                          : r.status === 'confirmed'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      {s.is_active ? 'Активен' : 'Скрыт'}
+                      {statusLabel[r.status] || r.status}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link to={`/suppliers/${s.id}`} className="mr-3 text-slate-700 underline">
-                      Изменить
+                    <Link to={`/rfqs/${r.id}`} className="text-slate-700 underline">
+                      Открыть
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(s.id, s.commercial_name)}
-                      className="text-red-600 underline"
-                    >
-                      Удалить
-                    </button>
                   </td>
                 </tr>
               ))}
               {data.data.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                    Пока нет поставщиков
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                    Заявок пока нет
                   </td>
                 </tr>
               )}

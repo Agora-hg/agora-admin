@@ -12,6 +12,9 @@ export type Supplier = {
   email: string | null
   website: string | null
   telegram: string | null
+  telegram_status?: 'none' | 'waiting' | 'linked'
+  telegram_linked_at?: string | null
+  telegram_first_name?: string | null
   is_active: boolean
   shipping_cities: string[]
 }
@@ -84,6 +87,37 @@ export type Paginated<T> = {
     per_page: number
     total: number
   }
+}
+
+export type RfqRecipient = {
+  id: number
+  supplier_id: number
+  status: string
+  error: string | null
+  sent_at: string | null
+  supplier: {
+    id: number
+    commercial_name: string
+    telegram: string | null
+    telegram_status: string
+  } | null
+}
+
+export type Rfq = {
+  id: number
+  public_id: string
+  status: 'new' | 'confirmed' | 'cancelled' | string
+  source: string
+  buyer_name: string
+  buyer_phone: string | null
+  buyer_email: string | null
+  buyer_company: string | null
+  buyer_city: string | null
+  comment: string | null
+  items: Array<{ title?: string; offer_title?: string; qty?: number; offer_id?: number }>
+  recipients?: RfqRecipient[]
+  confirmed_at: string | null
+  created_at: string | null
 }
 
 export type Dictionaries = {

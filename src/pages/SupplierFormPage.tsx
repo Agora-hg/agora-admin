@@ -29,6 +29,9 @@ export function SupplierFormPage() {
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
+  const [tgStatus, setTgStatus] = useState<'none' | 'waiting' | 'linked'>('none')
+  const [tgLinkedAt, setTgLinkedAt] = useState<string | null>(null)
+  const [tgFirstName, setTgFirstName] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -50,6 +53,9 @@ export function SupplierFormPage() {
         })
         setLogoUrl(s.logo_url)
         setRemoveLogo(false)
+        setTgStatus(s.telegram_status || 'none')
+        setTgLinkedAt(s.telegram_linked_at || null)
+        setTgFirstName(s.telegram_first_name || null)
       })
       .finally(() => setLoading(false))
   }, [id])
@@ -132,7 +138,7 @@ export function SupplierFormPage() {
               ['phone', 'Телефон', 'text'],
               ['email', 'Email', 'email'],
               ['website', 'Сайт', 'url'],
-              ['telegram', 'Telegram', 'text'],
+              ['telegram', 'Telegram @username', 'text'],
             ] as const
           ).map(([key, label, type]) => (
             <label key={key} className="block text-sm">
@@ -146,6 +152,38 @@ export function SupplierFormPage() {
             </label>
           ))}
         </div>
+
+        {isEdit && (
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+            <div className="font-medium">
+              Telegram бот:{' '}
+              {tgStatus === 'linked'
+                ? `привязан${tgFirstName ? ` (${tgFirstName})` : ''}`
+                : tgStatus === 'waiting'
+                  ? 'ждём Start'
+                  : 'юз не указан'}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Поставщик говорит вам юз → вписываете сюда → он ищет @agora_managerbot и жмёт Start.
+              Пока Start нет, заявки копятся, в Telegram не уходят.
+            </p>
+            {tgStatus === 'linked' && (
+              <button
+                type="button"
+                className="mt-2 text-xs text-red-600 underline"
+                onClick={async () => {
+                  if (!id || !confirm('Отвязать Telegram?')) return
+                  const res = await api<{ data: Supplier }>(`/admin/suppliers/${id}/telegram/unlink`, { method: 'POST' })
+                  setTgStatus(res.data.telegram_status || 'none')
+                  setTgLinkedAt(null)
+                  setTgFirstName(null)
+                }}
+              >
+                Отвязать{tgLinkedAt ? ` · ${new Date(tgLinkedAt).toLocaleString('ru-RU')}` : ''}
+              </button>
+            )}
+          </div>
+        )}
 
         <label className="block text-sm">
           <span className="mb-1 block font-medium">Города отгрузки</span>

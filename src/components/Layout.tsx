@@ -27,6 +27,12 @@ export function Layout() {
               <NavLink to="/suppliers" className={linkClass}>
                 Поставщики
               </NavLink>
+              <NavLink to="/rfqs" className={linkClass}>
+                Заявки
+              </NavLink>
+              <NavLink to="/broadcast" className={linkClass}>
+                Рассылка
+              </NavLink>
               <NavLink to="/ai" className={linkClass}>
                 ИИ-подбор
               </NavLink>

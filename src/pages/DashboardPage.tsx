@@ -97,6 +97,8 @@ type Dash = {
   generated_at: string
   days: number
   catalog: Catalog
+  rfqs?: { new: number; confirmed: number; cancelled: number; total: number }
+  telegram?: { linked_suppliers: number; waiting_suppliers: number }
   ai: AiBlock
   rates: {
     input_per_mtok: number
@@ -268,6 +270,11 @@ export function DashboardPage() {
           <span className="dash-jump-k">Компании</span>
           <strong>Поставщики</strong>
           <em>{cat ? `${cat.suppliers_active} акт. / ${cat.suppliers_total}` : '—'}</em>
+        </Link>
+        <Link to="/rfqs" className="dash-jump-card">
+          <span className="dash-jump-k">Входящие</span>
+          <strong>Заявки</strong>
+          <em>{data?.rfqs ? `${data.rfqs.new} новых / ${data.rfqs.total}` : '—'}</em>
         </Link>
         <Link to="/ai" className="dash-jump-card dash-jump-ai">
           <span className="dash-jump-k">Тест</span>

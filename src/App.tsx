@@ -10,6 +10,10 @@ import { LoginPage } from './pages/LoginPage'
 import { OfferFormPage } from './pages/OfferFormPage'
 import { OffersPage } from './pages/OffersPage'
 import { SupplierFormPage } from './pages/SupplierFormPage'
+import { BroadcastPage } from './pages/BroadcastPage'
+import { RfqDetailPage } from './pages/RfqDetailPage'
+import { RfqNewPage } from './pages/RfqNewPage'
+import { RfqsPage } from './pages/RfqsPage'
 import { SuppliersPage } from './pages/SuppliersPage'
 
 export default function App() {
@@ -32,6 +36,10 @@ export default function App() {
             <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/suppliers/new" element={<SupplierFormPage />} />
             <Route path="/suppliers/:id" element={<SupplierFormPage />} />
+            <Route path="/rfqs" element={<RfqsPage />} />
+            <Route path="/rfqs/new" element={<RfqNewPage />} />
+            <Route path="/rfqs/:id" element={<RfqDetailPage />} />
+            <Route path="/broadcast" element={<BroadcastPage />} />
             <Route path="/ai" element={<AiMatchPage />} />
             <Route path="/ai/sessions" element={<AiSessionsPage />} />
             <Route path="/ai/sessions/:id" element={<AiSessionReadPage />} />
